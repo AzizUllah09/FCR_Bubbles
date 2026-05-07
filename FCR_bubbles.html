@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FCR Bubbles — Premium Car Wash Jeddah · مغسلة الرغوة</title>
+<meta name="description" content="FCR Bubbles — Jeddah's premium car wash experience. Foam cannon, hand detail, nano shampoo. غسيل سيارات احترافي في جدة." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Archivo:wght@400;500;700;900&family=Archivo+Black&family=JetBrains+Mono:wght@400;700&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  :root{
+    --yellow: #FFD000;
+    --yellow-deep: #F5B800;
+    --yellow-glow: rgba(255,208,0,.4);
+    --black: #0A0A0A;
+    --ink: #141414;
+    --smoke: #1d1d1d;
+    --concrete: #2a2a2a;
+    --bone: #f6f3ea;
+    --red: #E63946;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Archivo', system-ui, sans-serif;
+    background:var(--black);
+    color:var(--bone);
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  body.ar{font-family:'Tajawal', sans-serif}
+
+  body::before{
+    content:'';
+    position:fixed;inset:0;
+    pointer-events:none;
+    z-index:9999;
+    opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode:overlay;
+  }
+
+  .nav{
+    position:fixed;top:0;left:0;right:0;
+    z-index:100;
+    padding:18px 32px;
+    display:flex;justify-content:space-between;align-items:center;
+    background:rgba(10,10,10,.7);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(255,208,0,.15);
+    transition:all .3s ease;
+  }
+  .nav-logo{
+    display:flex;align-items:center;gap:10px;
+    font-family:'Archivo Black', sans-serif;
+    font-size:22px;letter-spacing:.5px;
+    color:var(--yellow);
+    text-decoration:none;
+  }
+  .nav-logo .bubble{
+    width:32px;height:32px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #fff5b8, var(--yellow) 50%, var(--yellow-deep));
+    box-shadow:0 0 20px var(--yellow-glow), inset -3px -4px 8px rgba(0,0,0,.2);
+    flex-shrink:0;
+    animation:bob 3s ease-in-out infinite;
+  }
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+  .nav-links{display:flex;gap:32px;align-items:center}
+  .nav-links a{
+    color:var(--bone);
+    text-decoration:none;
+    font-size:13px;
+    font-weight:500;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    position:relative;
+    transition:color .2s;
+  }
+  .nav-links a:hover{color:var(--yellow)}
+  .nav-links a::after{
+    content:'';position:absolute;bottom:-4px;left:0;
+    width:0;height:2px;background:var(--yellow);
+    transition:width .3s;
+  }
+  .nav-links a:hover::after{width:100%}
+  .lang-toggle{
+    border:1.5px solid var(--yellow);
+    background:transparent;
+    color:var(--yellow);
+    padding:8px 14px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:1px;
+    cursor:pointer;
+    transition:all .2s;
+  }
+  .lang-toggle:hover{background:var(--yellow);color:var(--black)}
+
+  .hero{
+    height:100vh;
+    min-height:700px;
+    position:relative;
+    overflow:hidden;
+    background:var(--black);
+  }
+  #scene-container{
+    position:absolute;
+    inset:0;
+    z-index:1;
+    cursor:grab;
+  }
+  #scene-container:active{cursor:grabbing}
+  #scene-container canvas{display:block}
+
+  .hero-overlay{
+    position:absolute;
+    inset:0;
+    z-index:2;
+    pointer-events:none;
+    background:
+      linear-gradient(180deg, rgba(10,10,10,.6) 0%, transparent 25%, transparent 60%, rgba(10,10,10,.85) 100%),
+      radial-gradient(circle at 50% 50%, transparent 30%, rgba(10,10,10,.4) 100%);
+  }
+
+  .hero-content{
+    position:absolute;
+    inset:0;
+    z-index:3;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:140px 48px 60px;
+    pointer-events:none;
+  }
+  .hero-content > *{pointer-events:auto}
+
+  .hero-top{max-width:680px}
+  .hero-tag{
+    display:inline-flex;align-items:center;gap:10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:var(--yellow);
+    margin-bottom:24px;
+    padding:8px 16px;
+    border:1px solid rgba(255,208,0,.3);
+    border-radius:999px;
+    background:rgba(10,10,10,.5);
+    backdrop-filter:blur(8px);
+    width:fit-content;
+  }
+  .hero-tag .dot{
+    width:6px;height:6px;border-radius:50%;
+    background:#22c55e;
+    box-shadow:0 0 8px #22c55e;
+    animation:pulse 2s infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+
+  h1.hero-title{
+    font-family:'Archivo Black', sans-serif;
+    font-size:clamp(64px, 10vw, 160px);
+    line-height:.85;
+    letter-spacing:-.04em;
+    text-transform:uppercase;
+    text-shadow:0 4px 30px rgba(0,0,0,.6);
+  }
+  h1.hero-title .y{color:var(--yellow);text-shadow:0 0 40px var(--yellow-glow)}
+  h1.hero-title .stroke{
+    color:transparent;
+    -webkit-text-stroke:2px var(--bone);
+  }
+
+  .hero-bottom{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:40px;
+    flex-wrap:wrap;
+  }
+  .hero-sub{
+    font-size:17px;
+    line-height:1.6;
+    max-width:480px;
+    color:rgba(246,243,234,.85);
+    text-shadow:0 2px 10px rgba(0,0,0,.5);
+  }
+  .hero-cta{display:flex;gap:14px;flex-wrap:wrap}
+  .btn{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:18px 32px;
+    font-family:'Archivo', sans-serif;
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    text-decoration:none;
+    cursor:pointer;
+    border:none;
+    transition:all .2s ease;
+    position:relative;
+    overflow:hidden;
+  }
+  .btn-primary{
+    background:var(--yellow);
+    color:var(--black);
+    box-shadow:0 4px 30px rgba(255,208,0,.3);
+  }
+  .btn-primary:hover{
+    transform:translate(-2px,-2px);
+    box-shadow:6px 6px 0 var(--bone), 0 8px 40px rgba(255,208,0,.5);
+  }
+  .btn-ghost{
+    background:rgba(10,10,10,.5);
+    color:var(--bone);
+    border:1.5px solid rgba(246,243,234,.3);
+    backdrop-filter:blur(8px);
+  }
+  .btn-ghost:hover{border-color:var(--yellow);color:var(--yellow)}
+  .btn .arrow{transition:transform .2s}
+  .btn:hover .arrow{transform:translateX(4px)}
+
+  .scene-controls{
+    position:absolute;
+    bottom:20px;left:50%;
+    transform:translateX(-50%);
+    z-index:4;
+    display:flex;
+    gap:12px;
+    background:rgba(10,10,10,.6);
+    backdrop-filter:blur(12px);
+    border:1px solid rgba(255,208,0,.2);
+    border-radius:8px;
+    padding:10px 16px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:rgba(246,243,234,.8);
+  }
+  .scene-controls .ctrl{display:flex;align-items:center;gap:6px}
+  .scene-controls .key{
+    background:var(--yellow);
+    color:var(--black);
+    padding:3px 7px;
+    border-radius:3px;
+    font-weight:700;
+  }
+
+  .view-buttons{
+    position:absolute;
+    top:50%;right:32px;
+    transform:translateY(-50%);
+    z-index:4;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .view-btn{
+    background:rgba(10,10,10,.7);
+    backdrop-filter:blur(12px);
+    border:1px solid rgba(255,208,0,.2);
+    color:var(--bone);
+    padding:10px 14px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:all .2s;
+    text-align:right;
+    width:140px;
+  }
+  .view-btn:hover, .view-btn.active{
+    background:var(--yellow);
+    color:var(--black);
+    border-color:var(--yellow);
+  }
+  .view-btn .num{font-size:9px;opacity:.6;margin-right:6px}
+
+  #loader{
+    position:fixed;
+    inset:0;
+    background:var(--black);
+    z-index:10000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    gap:24px;
+    transition:opacity .6s, visibility .6s;
+  }
+  #loader.hide{opacity:0;visibility:hidden}
+  .loader-bubble{
+    width:80px;height:80px;
+    border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #fff5b8, var(--yellow) 50%, var(--yellow-deep));
+    box-shadow:0 0 60px var(--yellow-glow), inset -8px -10px 20px rgba(0,0,0,.2);
+    animation:floatBubble 1.6s ease-in-out infinite;
+  }
+  @keyframes floatBubble{
+    0%,100%{transform:translateY(0) scale(1)}
+    50%{transform:translateY(-20px) scale(1.05)}
+  }
+  .loader-text{
+    font-family:'Archivo Black', sans-serif;
+    font-size:14px;
+    letter-spacing:6px;
+    color:var(--yellow);
+    text-transform:uppercase;
+  }
+
+  .marquee{
+    background:var(--yellow);
+    color:var(--black);
+    padding:18px 0;
+    overflow:hidden;
+    border-top:2px solid var(--black);
+    border-bottom:2px solid var(--black);
+    position:relative;
+    z-index:3;
+  }
+  .marquee-track{
+    display:flex;
+    gap:40px;
+    white-space:nowrap;
+    animation:scroll 40s linear infinite;
+    font-family:'Archivo Black', sans-serif;
+    font-size:24px;
+    text-transform:uppercase;
+  }
+  .marquee-track span{display:inline-flex;align-items:center;gap:40px}
+  .marquee-track span::after{content:'●';color:var(--black);font-size:14px}
+  @keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+  section{padding:120px 32px;position:relative}
+  .container{max-width:1400px;margin:0 auto}
+  .section-label{
+    display:flex;align-items:center;gap:14px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:var(--yellow);
+    margin-bottom:24px;
+  }
+  .section-label::before{content:'';width:32px;height:1px;background:var(--yellow)}
+  .section-title{
+    font-family:'Archivo Black', sans-serif;
+    font-size:clamp(44px, 7vw, 96px);
+    line-height:.95;
+    letter-spacing:-.03em;
+    text-transform:uppercase;
+    margin-bottom:60px;
+    max-width:1000px;
+  }
+  .section-title .stroke{color:transparent;-webkit-text-stroke:2px var(--bone)}
+  .section-title .y{color:var(--yellow)}
+
+  .story{
+    background:var(--ink);
+    border-top:2px solid var(--yellow);
+    border-bottom:2px solid rgba(255,208,0,.15);
+  }
+  .story-grid{
+    display:grid;
+    grid-template-columns:1.3fr 1fr;
+    gap:80px;
+    align-items:center;
+  }
+  .story-text p{
+    font-size:19px;
+    line-height:1.65;
+    margin-bottom:24px;
+    color:rgba(246,243,234,.85);
+  }
+  .story-text p:first-of-type::first-letter{
+    font-family:'Archivo Black', sans-serif;
+    font-size:84px;
+    line-height:.8;
+    color:var(--yellow);
+    float:left;
+    margin:6px 12px 0 0;
+    padding:0 6px;
+  }
+  body.ar .story-text p:first-of-type::first-letter{float:right;margin:6px 0 0 12px}
+  .story-quote{
+    background:var(--yellow);
+    color:var(--black);
+    padding:48px 40px;
+    position:relative;
+    transform:rotate(1deg);
+    box-shadow:-12px 12px 0 var(--ink), -12px 12px 0 1px var(--yellow);
+  }
+  .story-quote::before{
+    content:'"';
+    position:absolute;
+    top:-30px;left:24px;
+    font-family:'Archivo Black', sans-serif;
+    font-size:140px;
+    line-height:1;
+    color:var(--black);
+    opacity:.2;
+  }
+  .story-quote-text{
+    font-family:'Archivo Black', sans-serif;
+    font-size:28px;
+    line-height:1.1;
+    letter-spacing:-.02em;
+    text-transform:uppercase;
+    margin-bottom:20px;
+  }
+  .story-quote-author{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    border-top:1.5px solid var(--black);
+    padding-top:14px;
+  }
+
+  .services{background:var(--black)}
+  .pricing-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:0;
+    border:2px solid rgba(255,208,0,.2);
+  }
+  .price-card{
+    padding:48px 32px;
+    border-right:1px solid rgba(255,208,0,.2);
+    border-bottom:1px solid rgba(255,208,0,.2);
+    position:relative;
+    transition:all .3s;
+    background:var(--ink);
+    overflow:hidden;
+  }
+  .price-card::before{
+    content:'';
+    position:absolute;
+    top:-50%;left:-50%;
+    width:200%;height:200%;
+    background:radial-gradient(circle at center, rgba(255,208,0,.1), transparent 40%);
+    opacity:0;
+    transition:opacity .4s;
+    pointer-events:none;
+  }
+  .price-card:hover::before{opacity:1}
+  .price-card:hover{background:var(--smoke)}
+  .price-card.featured{background:var(--yellow);color:var(--black)}
+  .price-card.featured:hover{background:var(--yellow-deep)}
+  .price-card-num{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:2px;
+    opacity:.5;
+    margin-bottom:24px;
+  }
+  .price-card-name{
+    font-family:'Archivo Black', sans-serif;
+    font-size:28px;
+    text-transform:uppercase;
+    letter-spacing:-.01em;
+    line-height:1.1;
+    margin-bottom:8px;
+  }
+  .price-card-name .ar{
+    display:block;
+    font-family:'Tajawal', sans-serif;
+    font-size:18px;
+    font-weight:400;
+    margin-top:6px;
+    opacity:.7;
+    letter-spacing:0;
+  }
+  .price-card-desc{
+    font-size:14px;
+    line-height:1.6;
+    opacity:.7;
+    margin-bottom:32px;
+    min-height:56px;
+  }
+  .price-tiers{
+    display:flex;
+    gap:8px;
+    border-top:1.5px dashed currentColor;
+    padding-top:24px;
+  }
+  .price-tier{flex:1;text-align:center;padding:8px 4px}
+  .price-tier-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:9px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    opacity:.6;
+    margin-bottom:6px;
+  }
+  .price-tier-amount{
+    font-family:'Archivo Black', sans-serif;
+    font-size:32px;
+    line-height:1;
+  }
+  .price-tier-amount small{
+    font-size:11px;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:400;
+    margin-left:2px;
+    opacity:.7;
+  }
+  .price-single{
+    font-family:'Archivo Black', sans-serif;
+    font-size:64px;
+    line-height:1;
+    margin-top:12px;
+  }
+  .price-single small{
+    font-size:16px;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:400;
+    opacity:.7;
+    margin-left:4px;
+  }
+  .price-card .badge{
+    position:absolute;
+    top:24px;right:24px;
+    background:var(--black);
+    color:var(--yellow);
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:2px;
+    padding:5px 10px;
+    text-transform:uppercase;
+  }
+  .price-card.featured .badge{background:var(--bone);color:var(--black)}
+
+  .addons{
+    margin-top:80px;
+    display:grid;
+    grid-template-columns:1fr 2fr;
+    gap:60px;
+    align-items:start;
+  }
+  .addons-head h3{
+    font-family:'Archivo Black', sans-serif;
+    font-size:48px;
+    line-height:.95;
+    text-transform:uppercase;
+    margin-bottom:16px;
+    letter-spacing:-.02em;
+  }
+  .addons-head p{
+    color:rgba(246,243,234,.6);
+    font-size:15px;
+    line-height:1.6;
+  }
+  .addons-list{display:flex;flex-direction:column}
+  .addon{
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    gap:24px;
+    align-items:center;
+    padding:24px 0;
+    border-bottom:1px solid rgba(255,208,0,.15);
+    transition:all .3s;
+  }
+  .addon:hover{padding-left:16px;padding-right:16px;background:rgba(255,208,0,.04)}
+  .addon-num{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--yellow);
+    letter-spacing:2px;
+  }
+  .addon-name{
+    font-family:'Archivo Black', sans-serif;
+    font-size:22px;
+    text-transform:uppercase;
+    letter-spacing:-.01em;
+  }
+  .addon-name .ar{
+    font-family:'Tajawal', sans-serif;
+    font-size:14px;
+    font-weight:400;
+    opacity:.6;
+    margin-left:12px;
+  }
+  .addon-price{
+    font-family:'Archivo Black', sans-serif;
+    font-size:28px;
+    color:var(--yellow);
+  }
+  .addon-price small{font-size:11px;font-family:'JetBrains Mono', monospace;opacity:.7;font-weight:400;margin-left:2px}
+
+  .notice{
+    margin-top:48px;
+    padding:20px 24px;
+    background:rgba(230,57,70,.08);
+    border-left:4px solid var(--red);
+    display:flex;align-items:flex-start;gap:16px;
+  }
+  body.ar .notice{border-left:none;border-right:4px solid var(--red)}
+  .notice-tag{
+    background:var(--red);
+    color:var(--bone);
+    padding:4px 10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    flex-shrink:0;
+  }
+  .notice-text{font-size:14px;line-height:1.55;color:rgba(246,243,234,.85)}
+
+  .process{
+    background:var(--ink);
+    position:relative;
+    overflow:hidden;
+  }
+  .process::before{
+    content:'FCR';
+    position:absolute;
+    top:50%;
+    left:-50px;
+    transform:translateY(-50%);
+    font-family:'Archivo Black', sans-serif;
+    font-size:480px;
+    line-height:1;
+    color:transparent;
+    -webkit-text-stroke:1px rgba(255,208,0,.05);
+    pointer-events:none;
+    user-select:none;
+  }
+  .process-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:24px;
+    position:relative;
+    z-index:1;
+  }
+  .process-step{
+    border-top:2px solid var(--yellow);
+    padding-top:24px;
+    transition:transform .3s;
+  }
+  .process-step:hover{transform:translateY(-8px)}
+  .process-step-num{
+    font-family:'Archivo Black', sans-serif;
+    font-size:64px;
+    line-height:1;
+    color:var(--yellow);
+    margin-bottom:16px;
+  }
+  .process-step h4{
+    font-family:'Archivo Black', sans-serif;
+    font-size:22px;
+    text-transform:uppercase;
+    margin-bottom:8px;
+    letter-spacing:-.01em;
+  }
+  .process-step p{
+    font-size:14px;
+    line-height:1.6;
+    color:rgba(246,243,234,.6);
+  }
+  .stats{
+    margin-top:120px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    border-top:1px solid rgba(255,208,0,.2);
+    border-bottom:1px solid rgba(255,208,0,.2);
+  }
+  .stat{
+    padding:40px 24px;
+    border-right:1px solid rgba(255,208,0,.2);
+    text-align:center;
+  }
+  .stat:last-child{border-right:none}
+  .stat-num{
+    font-family:'Archivo Black', sans-serif;
+    font-size:64px;
+    line-height:1;
+    color:var(--yellow);
+    margin-bottom:8px;
+    letter-spacing:-.03em;
+  }
+  .stat-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:rgba(246,243,234,.6);
+  }
+
+  .cta{
+    background:var(--yellow);
+    color:var(--black);
+    padding:140px 32px;
+    position:relative;
+    overflow:hidden;
+  }
+  .cta::before{
+    content:'BOOK NOW';
+    position:absolute;
+    bottom:-100px;right:-30px;
+    font-family:'Archivo Black', sans-serif;
+    font-size:clamp(180px, 28vw, 380px);
+    line-height:.85;
+    color:transparent;
+    -webkit-text-stroke:2px rgba(0,0,0,.1);
+    letter-spacing:-.04em;
+    pointer-events:none;
+    user-select:none;
+  }
+  .cta-inner{
+    max-width:1400px;
+    margin:0 auto;
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:1.4fr 1fr;
+    gap:80px;
+    align-items:center;
+  }
+  .cta h2{
+    font-family:'Archivo Black', sans-serif;
+    font-size:clamp(56px, 9vw, 120px);
+    line-height:.9;
+    letter-spacing:-.04em;
+    text-transform:uppercase;
+    margin-bottom:24px;
+  }
+  .cta p{font-size:18px;line-height:1.6;max-width:520px;margin-bottom:40px}
+  .phone-block{background:var(--black);color:var(--yellow);padding:40px}
+  .phone-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:2px;
+    margin-bottom:12px;
+    opacity:.7;
+  }
+  .phone-num{
+    font-family:'Archivo Black', sans-serif;
+    font-size:42px;
+    line-height:1;
+    letter-spacing:-.01em;
+    margin-bottom:24px;
+    direction:ltr;
+  }
+  .phone-num a{color:inherit;text-decoration:none}
+  .phone-actions{display:flex;flex-direction:column;gap:8px}
+  .phone-actions a{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px 16px;
+    background:transparent;
+    border:1px solid rgba(255,208,0,.3);
+    color:var(--yellow);
+    text-decoration:none;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    transition:all .2s;
+  }
+  .phone-actions a:hover{
+    background:var(--yellow);
+    color:var(--black);
+    transform:translateX(4px);
+  }
+  body.ar .phone-actions a:hover{transform:translateX(-4px)}
+
+  footer{
+    background:var(--black);
+    padding:60px 32px 30px;
+    border-top:1px solid rgba(255,208,0,.15);
+  }
+  .footer-grid{
+    max-width:1400px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:2fr 1fr 1fr 1fr;
+    gap:40px;
+    margin-bottom:40px;
+  }
+  .footer-brand{
+    font-family:'Archivo Black', sans-serif;
+    font-size:32px;
+    color:var(--yellow);
+    margin-bottom:16px;
+  }
+  .footer-tagline{
+    font-size:14px;line-height:1.6;
+    color:rgba(246,243,234,.6);
+    max-width:380px;
+  }
+  .footer-col h5{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--yellow);
+    margin-bottom:16px;
+  }
+  .footer-col a, .footer-col li{
+    display:block;
+    color:rgba(246,243,234,.7);
+    text-decoration:none;
+    font-size:14px;
+    margin-bottom:8px;
+    list-style:none;
+    transition:color .2s;
+  }
+  .footer-col a:hover{color:var(--yellow)}
+  .footer-bottom{
+    max-width:1400px;
+    margin:0 auto;
+    padding-top:30px;
+    border-top:1px solid rgba(255,208,0,.1);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;letter-spacing:1.5px;
+    color:rgba(246,243,234,.4);
+  }
+
+  body.ar{direction:rtl}
+  body.ar .price-card-name,
+  body.ar .addon-name,
+  body.ar h1.hero-title,
+  body.ar .section-title,
+  body.ar .cta h2,
+  body.ar .footer-brand,
+  body.ar .phone-num,
+  body.ar .story-quote-text,
+  body.ar .addons-head h3{font-family:'Tajawal', sans-serif; font-weight:900}
+  body.ar .price-tier-amount,
+  body.ar .price-single,
+  body.ar .stat-num,
+  body.ar .addon-price,
+  body.ar .process-step-num{font-family:'Archivo Black', sans-serif}
+
+  @media (max-width: 1024px){
+    .story-grid{grid-template-columns:1fr;gap:48px}
+    .pricing-grid{grid-template-columns:1fr}
+    .price-card{border-right:none}
+    .addons{grid-template-columns:1fr;gap:32px}
+    .process-grid{grid-template-columns:repeat(2,1fr);gap:32px}
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .stat:nth-child(2){border-right:none}
+    .stat:nth-child(1),.stat:nth-child(2){border-bottom:1px solid rgba(255,208,0,.2)}
+    .cta-inner{grid-template-columns:1fr;gap:40px}
+    .footer-grid{grid-template-columns:1fr 1fr;gap:32px}
+    .view-buttons{display:none}
+  }
+  @media (max-width: 640px){
+    .nav{padding:14px 20px}
+    .nav-links{gap:14px}
+    .nav-links a{display:none}
+    .nav-links .lang-toggle{display:block}
+    section{padding:80px 20px}
+    .hero-content{padding:100px 24px 80px}
+    .hero-bottom{flex-direction:column;align-items:flex-start}
+    .scene-controls{font-size:9px;padding:8px 12px;gap:8px;flex-wrap:wrap;justify-content:center;max-width:90%}
+    .price-card{padding:32px 24px}
+    .footer-grid{grid-template-columns:1fr}
+    .footer-bottom{flex-direction:column;gap:12px;text-align:center}
+    .stats{grid-template-columns:1fr}
+    .stat{border-right:none;border-bottom:1px solid rgba(255,208,0,.2)}
+    .process-grid{grid-template-columns:1fr}
+    .cta{padding:80px 20px}
+    .marquee-track{font-size:18px}
+    .story-quote{padding:32px 24px}
+    .story-quote-text{font-size:22px}
+  }
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-bubble"></div>
+  <div class="loader-text" id="loaderText">Building the bay...</div>
+</div>
+
+<nav class="nav">
+  <a href="#" class="nav-logo"><span class="bubble"></span> FCR<span style="color:#fff;font-size:14px;margin-left:4px;letter-spacing:2px">BUBBLES</span></a>
+  <div class="nav-links" id="navLinks">
+    <a href="#story" data-en="The Story" data-ar="القصة">The Story</a>
+    <a href="#services" data-en="Services" data-ar="الخدمات">Services</a>
+    <a href="#process" data-en="Process" data-ar="آلية العمل">Process</a>
+    <a href="#contact" data-en="Visit" data-ar="زورونا">Visit</a>
+    <button class="lang-toggle" id="langBtn">عربي / EN</button>
+  </div>
+</nav>
+
+<section class="hero">
+  <div id="scene-container"></div>
+  <div class="hero-overlay"></div>
+
+  <div class="view-buttons">
+    <button class="view-btn active" data-view="0"><span class="num">01</span><span data-en="Front Bay" data-ar="الواجهة">Front Bay</span></button>
+    <button class="view-btn" data-view="1"><span class="num">02</span><span data-en="Side Angle" data-ar="جانبي">Side Angle</span></button>
+    <button class="view-btn" data-view="2"><span class="num">03</span><span data-en="Top Down" data-ar="من فوق">Top Down</span></button>
+    <button class="view-btn" data-view="3"><span class="num">04</span><span data-en="Inside Bay" data-ar="داخل المغسلة">Inside Bay</span></button>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-top">
+      <div class="hero-tag">
+        <span class="dot"></span>
+        <span data-en="Open Now · Jeddah" data-ar="مفتوح الآن · جدة">Open Now · Jeddah</span>
+      </div>
+      <h1 class="hero-title">
+        <span class="y">FOAM.</span>
+        <span class="stroke"> SHINE.</span>
+        REPEAT.
+      </h1>
+    </div>
+
+    <div class="hero-bottom">
+      <p class="hero-sub" data-en="Step inside our bay. Drag, rotate, and explore — the same precision we bring to every car we wash, built into pixels first." data-ar="ادخل إلى مغسلتنا. اسحب، دوّر، واستكشف — نفس الدقة التي نقدمها لكل سيارة، مبنية بالبكسلات أولًا.">
+        Step inside our bay. Drag, rotate, and explore — the same precision we bring to every car we wash, built into pixels first.
+      </p>
+      <div class="hero-cta">
+        <a href="#contact" class="btn btn-primary">
+          <span data-en="Book a Wash" data-ar="احجز غسيل">Book a Wash</span>
+          <span class="arrow">→</span>
+        </a>
+        <a href="#services" class="btn btn-ghost">
+          <span data-en="See Pricing" data-ar="الأسعار">See Pricing</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="scene-controls">
+    <div class="ctrl"><span class="key">DRAG</span> <span data-en="Rotate" data-ar="دوّر">Rotate</span></div>
+    <div class="ctrl"><span class="key">SCROLL</span> <span data-en="Zoom" data-ar="تكبير">Zoom</span></div>
+    <div class="ctrl"><span class="key">CLICK</span> <span data-en="Change View" data-ar="غيّر الزاوية">Change View</span></div>
+  </div>
+</section>
+
+<div class="marquee">
+  <div class="marquee-track">
+    <span>FOAM CANNON</span><span>HAND DETAIL</span><span>NANO SHAMPOO</span><span>HEXAGON LIGHTS</span><span>OPEN LATE</span><span>JEDDAH</span><span>FCR BUBBLES</span>
+    <span>FOAM CANNON</span><span>HAND DETAIL</span><span>NANO SHAMPOO</span><span>HEXAGON LIGHTS</span><span>OPEN LATE</span><span>JEDDAH</span><span>FCR BUBBLES</span>
+  </div>
+</div>
+
+<section class="story" id="story">
+  <div class="container">
+    <div class="section-label" data-en="// 01 — Who we are" data-ar="// 01 — من نحن">// 01 — Who we are</div>
+    <h2 class="section-title">
+      <span data-en="Not just a wash." data-ar="ليس مجرد غسيل.">Not just a wash.</span>
+      <span class="y" data-en=" A ritual." data-ar=" بل طقس كامل.">A ritual.</span>
+    </h2>
+
+    <div class="story-grid">
+      <div class="story-text">
+        <p data-en="There's a moment, right after a proper wash, when you walk back to your car and pause. The paint catches the light differently. The wheels look sharper. The air inside hits cleaner. That moment is what we chase, every car, every shift." data-ar="هناك لحظة، فور انتهاء الغسيل الصحيح، عندما تعود لسيارتك وتتوقف. يلتقط الطلاء الضوء بشكل مختلف. الجنوط تبدو أوضح. الهواء بداخلها أنقى. تلك اللحظة هي ما نسعى إليه، في كل سيارة، في كل وقت.">
+          There's a moment, right after a proper wash, when you walk back to your car and pause. The paint catches the light differently. The wheels look sharper. The air inside hits cleaner. That moment is what we chase, every car, every shift.
+        </p>
+        <p data-en="FCR Bubbles started with a simple rule: wash every car the way we'd wash our own. That means real foam, not watered-down soap. Real microfibers, swapped between cars. Real hands moving over real panels — no automated brushes scratching paint." data-ar="بدأت مغسلة FCR Bubbles بقاعدة واحدة: نغسل كل سيارة كما نغسل سيارتنا. يعني رغوة حقيقية، ليست صابون مخفف. مناشف ميكروفايبر حقيقية تُبدّل بين السيارات. أيدٍ حقيقية تعمل على الطلاء — لا فرش آلية تخدشه.">
+          FCR Bubbles started with a simple rule: wash every car the way we'd wash our own. That means real foam, not watered-down soap. Real microfibers, swapped between cars. Real hands moving over real panels — no automated brushes scratching paint.
+        </p>
+        <p data-en="We're a Jeddah operation. Loud yellow bays, hexagon lights overhead, and a phone that rings straight through to the people doing the work. No call centers. No upsells. Just clean cars and honest pricing." data-ar="نحن مغسلة من جدة. مغاسل صفراء صاخبة، إضاءة سداسية في الأعلى، وهاتف يصل مباشرة للناس اللي يشتغلون. لا مراكز اتصال. لا مبيعات إضافية. فقط سيارات نظيفة وأسعار صادقة.">
+          We're a Jeddah operation. Loud yellow bays, hexagon lights overhead, and a phone that rings straight through to the people doing the work. No call centers. No upsells. Just clean cars and honest pricing.
+        </p>
+      </div>
+
+      <div class="story-quote">
+        <div class="story-quote-text" data-en="If we wouldn't put our own car through it, we won't put yours through it either." data-ar="لو ما رضينا نغسل سيارتنا فيه، ما راح نغسل سيارتك فيه.">
+          If we wouldn't put our own car through it, we won't put yours through it either.
+        </div>
+        <div class="story-quote-author" data-en="— FCR Bubbles Crew" data-ar="— فريق FCR Bubbles">— FCR Bubbles Crew</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="services" id="services">
+  <div class="container">
+    <div class="section-label" data-en="// 02 — Services & Pricing" data-ar="// 02 — الخدمات والأسعار">// 02 — Services & Pricing</div>
+    <h2 class="section-title">
+      <span data-en="One menu." data-ar="قائمة واحدة.">One menu.</span>
+      <span class="y" data-en=" No surprises." data-ar=" بدون مفاجآت.">No surprises.</span>
+      <span class="stroke" data-en=" Pick yours." data-ar=" اختر خدمتك.">Pick yours.</span>
+    </h2>
+
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-card-num">001 / FULL</div>
+        <div class="price-card-name">Full Car Wash<span class="ar">غسيل سيارة كاملة</span></div>
+        <p class="price-card-desc" data-en="The full treatment — exterior foam wash, interior vacuum, dashboard wipe-down, glass inside and out." data-ar="العلاج الشامل — رغوة خارجية كاملة، شفط داخلي، تنظيف الطبلون، الزجاج من الداخل والخارج.">
+          The full treatment — exterior foam wash, interior vacuum, dashboard wipe-down, glass inside and out.
+        </p>
+        <div class="price-tiers">
+          <div class="price-tier"><div class="price-tier-label" data-en="Small" data-ar="صغيرة">Small</div><div class="price-tier-amount">25<small>SAR</small></div></div>
+          <div class="price-tier"><div class="price-tier-label" data-en="Medium" data-ar="وسط">Medium</div><div class="price-tier-amount">30<small>SAR</small></div></div>
+          <div class="price-tier"><div class="price-tier-label" data-en="Large" data-ar="كبيرة">Large</div><div class="price-tier-amount">35<small>SAR</small></div></div>
+        </div>
+      </div>
+
+      <div class="price-card featured">
+        <span class="badge" data-en="Most Popular" data-ar="الأكثر طلبًا">Most Popular</span>
+        <div class="price-card-num">002 / EXTERIOR</div>
+        <div class="price-card-name">Exterior Wash<span class="ar">غسيل خارجي</span></div>
+        <p class="price-card-desc" data-en="Foam, scrub, rinse, dry. The fast lane — when you need a clean car in fifteen minutes flat." data-ar="رغوة، فرك، شطف، تجفيف. المسار السريع — عندما تحتاج سيارة نظيفة في خمسة عشر دقيقة فقط.">
+          Foam, scrub, rinse, dry. The fast lane — when you need a clean car in fifteen minutes flat.
+        </p>
+        <div class="price-tiers">
+          <div class="price-tier"><div class="price-tier-label" data-en="Small" data-ar="صغيرة">Small</div><div class="price-tier-amount">15<small>SAR</small></div></div>
+          <div class="price-tier"><div class="price-tier-label" data-en="Medium" data-ar="وسط">Medium</div><div class="price-tier-amount">20<small>SAR</small></div></div>
+          <div class="price-tier"><div class="price-tier-label" data-en="Large" data-ar="كبيرة">Large</div><div class="price-tier-amount">25<small>SAR</small></div></div>
+        </div>
+      </div>
+
+      <div class="price-card">
+        <div class="price-card-num">003 / QUICK</div>
+        <div class="price-card-name">Quick Spray<span class="ar">رش موية للسيارات الصغيرة</span></div>
+        <p class="price-card-desc" data-en="Just a rinse. Knock the dust off, ditch the desert grit, get back on the road." data-ar="مجرد شطف. أزل الغبار، تخلّص من تراب الصحراء، وارجع للطريق.">
+          Just a rinse. Knock the dust off, ditch the desert grit, get back on the road.
+        </p>
+        <div class="price-tiers">
+          <div class="price-tier"><div class="price-tier-label" data-en="Small" data-ar="صغيرة">Small</div><div class="price-tier-amount">5<small>SAR</small></div></div>
+          <div class="price-tier"><div class="price-tier-label" data-en="Medium" data-ar="وسط">Medium</div><div class="price-tier-amount">—</div></div>
+          <div class="price-tier"><div class="price-tier-label" data-en="Large" data-ar="كبيرة">Large</div><div class="price-tier-amount">10<small>SAR</small></div></div>
+        </div>
+      </div>
+
+      <div class="price-card">
+        <div class="price-card-num">004 / COASTER</div>
+        <div class="price-card-name">Bus & Coaster Wash<span class="ar">غسيل باص كوستر</span></div>
+        <p class="price-card-desc" data-en="Big rigs welcome. Full wash for buses, coasters, and oversized vehicles. Bring it in." data-ar="المركبات الكبيرة مرحب بها. غسيل كامل للباصات والكوسترات والمركبات الكبيرة. ادخل بها.">
+          Big rigs welcome. Full wash for buses, coasters, and oversized vehicles. Bring it in.
+        </p>
+        <div class="price-single">60<small>SAR</small></div>
+      </div>
+
+      <div class="price-card">
+        <div class="price-card-num">005 / POLISH</div>
+        <div class="price-card-name">Tire Polish<span class="ar">تلميع كفرات</span></div>
+        <p class="price-card-desc" data-en="Tires that look like the day they came off the rack. Wet-look finish, deep black, instant transformation." data-ar="إطارات تبدو كأول يوم خرجت من الصندوق. مظهر رطب لامع، أسود غامق، تحوّل فوري.">
+          Tires that look like the day they came off the rack. Wet-look finish, deep black, instant transformation.
+        </p>
+        <div class="price-single">5<small>SAR</small></div>
+      </div>
+
+      <div class="price-card">
+        <div class="price-card-num">006 / MATS</div>
+        <div class="price-card-name">Floor Mat Refresh<span class="ar">تكييس دعاسات</span></div>
+        <p class="price-card-desc" data-en="Mats restored, cleaned, and dyed back to factory color. Because the floor of your car shouldn't tell the story of every coffee spill." data-ar="دعاسات مغسولة ومعاد صبغها بلون المصنع. لأن أرض سيارتك ما يفترض تروي قصة كل قهوة انسكبت.">
+          Mats restored, cleaned, and dyed back to factory color. Because the floor of your car shouldn't tell the story of every coffee spill.
+        </p>
+        <div class="price-single">5<small>SAR</small></div>
+      </div>
+    </div>
+
+    <div class="addons">
+      <div class="addons-head">
+        <h3 data-en="Stack the Extras" data-ar="أضف الإضافات">Stack the Extras</h3>
+        <p data-en="Add-ons for the people who don't believe in 'good enough.' Layer them onto any wash above for the next-level finish." data-ar="إضافات لمن لا يؤمنون بفكرة 'كافي.' أضفها لأي غسيل من الأعلى للحصول على تشطيب من مستوى آخر.">
+          Add-ons for the people who don't believe in "good enough." Layer them onto any wash above for the next-level finish.
+        </p>
+      </div>
+      <div class="addons-list">
+        <div class="addon">
+          <div class="addon-num">+ 01</div>
+          <div class="addon-name">Wax Shampoo<span class="ar">شامبو واكس</span></div>
+          <div class="addon-price">5<small>SAR</small></div>
+        </div>
+        <div class="addon">
+          <div class="addon-num">+ 02</div>
+          <div class="addon-name">Nano Shampoo<span class="ar">شامبو نانو</span></div>
+          <div class="addon-price">10<small>SAR</small></div>
+        </div>
+        <div class="addon">
+          <div class="addon-num">+ 03</div>
+          <div class="addon-name">Tire & Trim Bag<span class="ar">كيس للإطار وملحقاتها</span></div>
+          <div class="addon-price">5<small>SAR</small></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notice">
+      <span class="notice-tag" data-en="HEADS UP" data-ar="ملاحظة">HEADS UP</span>
+      <p class="notice-text" data-en="Larger or unusually-shaped vehicles (vans, SUVs, modified frames) may price differently. Final cost depends on size and condition — we'll quote you before we start." data-ar="المركبات الأكبر أو ذات الأشكال غير المعتادة (فانات، SUV، هياكل معدلة) قد يختلف سعرها. السعر النهائي يعتمد على الحجم والحالة — سنخبرك قبل أن نبدأ.">
+        Larger or unusually-shaped vehicles (vans, SUVs, modified frames) may price differently. Final cost depends on size and condition — we'll quote you before we start.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="process" id="process">
+  <div class="container">
+    <div class="section-label" data-en="// 03 — How it works" data-ar="// 03 — كيف نعمل">// 03 — How it works</div>
+    <h2 class="section-title">
+      <span class="stroke" data-en="Four moves." data-ar="أربع خطوات.">Four moves.</span>
+      <span class="y" data-en=" One showroom finish." data-ar=" تشطيب كأنه من المعرض.">One showroom finish.</span>
+    </h2>
+
+    <div class="process-grid">
+      <div class="process-step">
+        <div class="process-step-num">01</div>
+        <h4 data-en="Roll In" data-ar="ادخل">Roll In</h4>
+        <p data-en="Pull into a clean, well-lit bay. Tell us what you want, hand over the keys — or sit in your car if you'd rather watch the work." data-ar="ادخل إلى مغسلة نظيفة وبإضاءة جيدة. اخبرنا بما تريد، سلّم المفتاح — أو اجلس في سيارتك إذا تحب تشاهد العمل.">
+          Pull into a clean, well-lit bay. Tell us what you want, hand over the keys — or sit in your car if you'd rather watch the work.
+        </p>
+      </div>
+      <div class="process-step">
+        <div class="process-step-num">02</div>
+        <h4 data-en="Foam It" data-ar="رغوة">Foam It</h4>
+        <p data-en="Pre-rinse, then a thick foam blanket from the cannon. The foam dwells, lifts dirt, and softens grime — so the wash mitt never grinds particles into your paint." data-ar="شطف أولي، ثم بطانية رغوة سميكة من المدفع. الرغوة تستقر، ترفع الأوساخ، وتخفف الغبار — حتى لا تخدش قفازة الغسيل طلاءك.">
+          Pre-rinse, then a thick foam blanket from the cannon. The foam dwells, lifts dirt, and softens grime — so the wash mitt never grinds particles into your paint.
+        </p>
+      </div>
+      <div class="process-step">
+        <div class="process-step-num">03</div>
+        <h4 data-en="Hand Detail" data-ar="عناية يدوية">Hand Detail</h4>
+        <p data-en="Soft mitts, two-bucket method. Wheels, trim, badges — each handled separately with the right tool. Then a hand-dry with plush microfiber, no streaks, no swirls." data-ar="قفازات ناعمة، طريقة الدلوين. الجنوط، التفاصيل، الشعارات — كل واحد منها يُعالج بالأداة المناسبة. ثم تجفيف يدوي بميكروفايبر فاخر، بدون آثار أو دوامات.">
+          Soft mitts, two-bucket method. Wheels, trim, badges — each handled separately with the right tool. Then a hand-dry with plush microfiber, no streaks, no swirls.
+        </p>
+      </div>
+      <div class="process-step">
+        <div class="process-step-num">04</div>
+        <h4 data-en="Roll Out" data-ar="انطلق">Roll Out</h4>
+        <p data-en="Walk around with us. If anything's off, we fix it. Then you pay, slide back behind the wheel, and roll out looking like the day you bought it." data-ar="امش حولها معنا. إذا في شي مش تمام، نصلحه. تدفع، ترجع لمقعد القيادة، وتطلع كأن سيارتك جديدة من المعرض.">
+          Walk around with us. If anything's off, we fix it. Then you pay, slide back behind the wheel, and roll out looking like the day you bought it.
+        </p>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-num">15<span style="font-size:32px">m</span></div><div class="stat-label" data-en="Average Wash" data-ar="متوسط الغسيل">Average Wash</div></div>
+      <div class="stat"><div class="stat-num">2K+</div><div class="stat-label" data-en="Cars This Year" data-ar="سيارة هذا العام">Cars This Year</div></div>
+      <div class="stat"><div class="stat-num">4</div><div class="stat-label" data-en="Wash Bays" data-ar="مغاسل">Wash Bays</div></div>
+      <div class="stat"><div class="stat-num">5⭐</div><div class="stat-label" data-en="Customer Rating" data-ar="تقييم العملاء">Customer Rating</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="cta" id="contact">
+  <div class="cta-inner">
+    <div>
+      <div class="section-label" style="color:var(--black)" data-en="// 04 — Visit us" data-ar="// 04 — زورونا">// 04 — Visit us</div>
+      <h2 data-en="Drive over. We'll handle the rest." data-ar="تعال إلينا. ونحن نتولى الباقي.">Drive over. We'll handle the rest.</h2>
+      <p data-en="Walk in any time we're open. Need us to hold a bay? Call ahead — the line below rings the people on the floor, not a call center two cities away." data-ar="ادخل في أي وقت ضمن أوقات الدوام. تبي نجهز لك مغسلة؟ اتصل قبل وصولك — الرقم اللي تحت يصلك مباشرة بفريق العمل، مش مركز اتصال في مدينة ثانية.">
+        Walk in any time we're open. Need us to hold a bay? Call ahead — the line below rings the people on the floor, not a call center two cities away.
+      </p>
+      <a href="tel:+966565574675" class="btn btn-primary" style="background:var(--black);color:var(--yellow)">
+        <span data-en="Call the Bay" data-ar="اتصل بالمغسلة">Call the Bay</span>
+        <span class="arrow">→</span>
+      </a>
+    </div>
+
+    <div class="phone-block">
+      <div class="phone-label" data-en="// DIRECT LINE" data-ar="// خط مباشر">// DIRECT LINE</div>
+      <div class="phone-num"><a href="tel:+966565574675">056 557 4675</a></div>
+      <div class="phone-actions">
+        <a href="https://wa.me/966565574675"><span data-en="WhatsApp Us" data-ar="واتساب">WhatsApp Us</span><span>→</span></a>
+        <a href="https://share.google/b6YTeNVSD1upkIJJO" target="_blank" rel="noopener"><span data-en="Get Directions" data-ar="الاتجاهات">Get Directions</span><span>→</span></a>
+        <a href="#services"><span data-en="See Pricing" data-ar="القائمة">See Pricing</span><span>→</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-grid">
+    <div>
+      <div class="footer-brand">FCR<span style="color:var(--bone);font-size:14px;letter-spacing:3px;margin-left:8px">BUBBLES</span></div>
+      <p class="footer-tagline" data-en="A Jeddah car wash run by people who actually care about your car. Open late, honest pricing, and a foam cannon that means business." data-ar="مغسلة سيارات في جدة يديرها أشخاص يهتمون فعليًا بسيارتك. مفتوحة لساعات متأخرة، أسعار صادقة، ومدفع رغوة جدي بشغله.">A Jeddah car wash run by people who actually care about your car. Open late, honest pricing, and a foam cannon that means business.</p>
+    </div>
+    <div class="footer-col">
+      <h5 data-en="Services" data-ar="الخدمات">Services</h5>
+      <a href="#services" data-en="Full Wash" data-ar="غسيل كامل">Full Wash</a>
+      <a href="#services" data-en="Exterior" data-ar="خارجي">Exterior</a>
+      <a href="#services" data-en="Polish" data-ar="تلميع">Polish</a>
+      <a href="#services" data-en="Add-ons" data-ar="الإضافات">Add-ons</a>
+    </div>
+    <div class="footer-col">
+      <h5 data-en="Visit" data-ar="زورونا">Visit</h5>
+      <a href="https://share.google/b6YTeNVSD1upkIJJO" target="_blank" rel="noopener" data-en="Find Us" data-ar="موقعنا">Find Us</a>
+      <a href="tel:+966565574675">056 557 4675</a>
+      <li data-en="Open Daily" data-ar="مفتوح يوميًا">Open Daily</li>
+    </div>
+    <div class="footer-col">
+      <h5 data-en="Connect" data-ar="تابعنا">Connect</h5>
+      <a href="https://wa.me/966565574675">WhatsApp</a>
+      <a href="#">Instagram</a>
+      <a href="#">TikTok</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 FCR BUBBLES · JEDDAH, KSA</span>
+    <span data-en="Made with foam · صنع بالرغوة" data-ar="صنع بالرغوة · Made with foam">Made with foam · صنع بالرغوة</span>
+  </div>
+</footer>
+
+<script>
+let scene, camera, renderer, container;
+let foamParticles = [];
+let isDragging = false;
+let prevMouseX = 0, prevMouseY = 0;
+let rotationY = -0.3, rotationX = -0.1;
+let targetRotY = -0.3, targetRotX = -0.1;
+let zoom = 18, targetZoom = 18;
+let autoRotate = true;
+
+const views = [
+  { rotY: -0.3, rotX: -0.1, zoom: 18 },
+  { rotY: -1.2, rotX: -0.15, zoom: 20 },
+  { rotY: 0, rotX: -1.1, zoom: 22 },
+  { rotY: 3.0, rotX: 0.05, zoom: 11 },
+];
+
+function init() {
+  container = document.getElementById('scene-container');
+  scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x0a0a0a, 25, 60);
+
+  const aspect = container.clientWidth / container.clientHeight;
+  camera = new THREE.PerspectiveCamera(50, aspect, 0.1, 200);
+  updateCamera();
+
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x0a0a0a, 1);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  container.appendChild(renderer.domElement);
+
+  buildScene();
+  setupLights();
+  bindEvents();
+  animate();
+
+  setTimeout(() => {
+    document.getElementById('loader').classList.add('hide');
+  }, 800);
+}
+
+function buildScene() {
+  // Floor
+  const floorMat = new THREE.MeshStandardMaterial({
+    color: 0x2a2a2a, roughness: 0.85, metalness: 0.1,
+  });
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = -0.01;
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  // Wet shine layer
+  const wet = new THREE.Mesh(
+    new THREE.PlaneGeometry(20, 12),
+    new THREE.MeshStandardMaterial({
+      color: 0x111111, roughness: 0.2, metalness: 0.6,
+      transparent: true, opacity: 0.6,
+    })
+  );
+  wet.rotation.x = -Math.PI / 2;
+  wet.position.y = 0.005;
+  scene.add(wet);
+
+  // Yellow parking lines
+  const lineMat = new THREE.MeshBasicMaterial({ color: 0xFFD000 });
+  for (let i = -1; i <= 1; i += 2) {
+    const line = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 8), lineMat);
+    line.rotation.x = -Math.PI / 2;
+    line.position.set(i * 3.5, 0.02, 0);
+    scene.add(line);
+  }
+
+  // Back wall (black)
+  const wallMat = new THREE.MeshStandardMaterial({ color: 0x0e0e0e, roughness: 0.9 });
+  const backWall = new THREE.Mesh(new THREE.BoxGeometry(20, 8, 0.3), wallMat);
+  backWall.position.set(0, 4, -6);
+  backWall.receiveShadow = true;
+  scene.add(backWall);
+
+  // FCR text on back wall (white)
+  addFCRText(scene, -3, 3.2, -5.84, 1.0, 0xf6f3ea);
+
+  // Side walls (yellow)
+  const yellowMat = new THREE.MeshStandardMaterial({ color: 0xFFD000, roughness: 0.7 });
+  const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.3, 8, 12), yellowMat);
+  leftWall.position.set(-7, 4, -1);
+  leftWall.castShadow = true;
+  leftWall.receiveShadow = true;
+  scene.add(leftWall);
+
+  const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.3, 8, 12), yellowMat);
+  rightWall.position.set(7, 4, -1);
+  rightWall.castShadow = true;
+  rightWall.receiveShadow = true;
+  scene.add(rightWall);
+
+  // FCR on side walls (black)
+  addFCRText(scene, -6.84, 3, 0, 0.8, 0x0a0a0a, Math.PI / 2);
+  addFCRText(scene, 6.84, 3, 0, 0.8, 0x0a0a0a, -Math.PI / 2);
+
+  // Ceiling
+  const ceiling = new THREE.Mesh(
+    new THREE.BoxGeometry(20, 0.3, 12),
+    new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.95 })
+  );
+  ceiling.position.set(0, 8, -1);
+  scene.add(ceiling);
+
+  // Hex light grid
+  buildHexLights();
+
+  // Top sign
+  const signBg = new THREE.Mesh(
+    new THREE.BoxGeometry(14, 1.2, 0.2),
+    new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.6 })
+  );
+  signBg.position.set(0, 8.6, 5);
+  scene.add(signBg);
+
+  // Glowing FCR on top sign
+  addFCRText(scene, -2, 8.5, 5.15, 0.7, 0xFFD000, 0, true);
+
+  // Car
+  buildCar();
+
+  // Pricing pillar
+  buildPillar();
+
+  // Foam on car
+  buildFoam();
+
+  // Atmospheric bubbles
+  buildBubbles();
+}
+
+function addFCRText(parent, x, y, z, size, color, rotY = 0, glow = false) {
+  const group = new THREE.Group();
+  const mat = new THREE.MeshStandardMaterial({
+    color,
+    emissive: glow ? color : 0x000000,
+    emissiveIntensity: glow ? 0.8 : 0,
+    roughness: 0.6,
+  });
+  const t = size * 0.15;
+  const w = size * 1.2;
+  const h = size * 1.6;
+  const gap = size * 0.3;
+
+  // F
+  const f1 = new THREE.Mesh(new THREE.BoxGeometry(t, h, 0.1), mat); f1.position.set(0, 0, 0); group.add(f1);
+  const f2 = new THREE.Mesh(new THREE.BoxGeometry(w, t, 0.1), mat); f2.position.set(w/2, h/2 - t/2, 0); group.add(f2);
+  const f3 = new THREE.Mesh(new THREE.BoxGeometry(w * 0.7, t, 0.1), mat); f3.position.set(w*0.35, 0, 0); group.add(f3);
+
+  // C
+  const cx = w + gap + t/2;
+  const c1 = new THREE.Mesh(new THREE.BoxGeometry(t, h, 0.1), mat); c1.position.set(cx, 0, 0); group.add(c1);
+  const c2 = new THREE.Mesh(new THREE.BoxGeometry(w, t, 0.1), mat); c2.position.set(cx + w/2, h/2 - t/2, 0); group.add(c2);
+  const c3 = new THREE.Mesh(new THREE.BoxGeometry(w, t, 0.1), mat); c3.position.set(cx + w/2, -h/2 + t/2, 0); group.add(c3);
+
+  // R
+  const rx = cx + w + gap;
+  const r1 = new THREE.Mesh(new THREE.BoxGeometry(t, h, 0.1), mat); r1.position.set(rx, 0, 0); group.add(r1);
+  const r2 = new THREE.Mesh(new THREE.BoxGeometry(w, t, 0.1), mat); r2.position.set(rx + w/2, h/2 - t/2, 0); group.add(r2);
+  const r3 = new THREE.Mesh(new THREE.BoxGeometry(w, t, 0.1), mat); r3.position.set(rx + w/2, h*0.05, 0); group.add(r3);
+  const r4 = new THREE.Mesh(new THREE.BoxGeometry(t, h/2, 0.1), mat); r4.position.set(rx + w*0.85, h*0.27, 0); group.add(r4);
+  const r5 = new THREE.Mesh(new THREE.BoxGeometry(t, h/2 + size*0.1, 0.1), mat);
+  r5.position.set(rx + w*0.85, -h*0.25, 0);
+  r5.rotation.z = -0.3;
+  group.add(r5);
+
+  group.position.set(x, y, z);
+  group.rotation.y = rotY;
+  parent.add(group);
+  return group;
+}
+
+function buildHexLights() {
+  const hexMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 1.5, roughness: 0.3,
+  });
+  const hexShape = new THREE.Shape();
+  const hexR = 0.7;
+  for (let i = 0; i < 6; i++) {
+    const a = (Math.PI / 3) * i;
+    const x = hexR * Math.cos(a);
+    const y = hexR * Math.sin(a);
+    if (i === 0) hexShape.moveTo(x, y);
+    else hexShape.lineTo(x, y);
+  }
+  hexShape.closePath();
+  const hexGeo = new THREE.ExtrudeGeometry(hexShape, { depth: 0.05, bevelEnabled: false });
+
+  const positions = [
+    [-2.5, 7.85, -2], [0, 7.85, -2], [2.5, 7.85, -2],
+    [-3.75, 7.85, -3.2], [-1.25, 7.85, -3.2], [1.25, 7.85, -3.2], [3.75, 7.85, -3.2],
+    [-2.5, 7.85, -4.4], [0, 7.85, -4.4], [2.5, 7.85, -4.4],
+    [-3.75, 7.85, -0.8], [-1.25, 7.85, -0.8], [1.25, 7.85, -0.8], [3.75, 7.85, -0.8],
+    [-2.5, 7.85, 0.4], [0, 7.85, 0.4], [2.5, 7.85, 0.4],
+  ];
+
+  positions.forEach((pos, i) => {
+    const hex = new THREE.Mesh(hexGeo, hexMat);
+    hex.rotation.x = Math.PI / 2;
+    hex.position.set(pos[0], pos[1], pos[2]);
+    scene.add(hex);
+
+    if (i % 2 === 0) {
+      const light = new THREE.PointLight(0xffffff, 0.7, 8, 2);
+      light.position.set(pos[0], pos[1] - 0.5, pos[2]);
+      scene.add(light);
+    }
+  });
+}
+
+function buildCar() {
+  const carGroup = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: 0xeeeeee, roughness: 0.25, metalness: 0.7,
+  });
+
+  // Lower body
+  const lower = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.7, 1.9), bodyMat);
+  lower.position.y = 0.55;
+  lower.castShadow = true;
+  carGroup.add(lower);
+
+  // Hood
+  const hood = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.15, 1.85), bodyMat);
+  hood.position.set(1.4, 0.95, 0);
+  hood.castShadow = true;
+  carGroup.add(hood);
+
+  // Trunk
+  const trunk = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.15, 1.85), bodyMat);
+  trunk.position.set(-1.6, 0.95, 0);
+  trunk.castShadow = true;
+  carGroup.add(trunk);
+
+  // Cabin
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.7, 1.75), bodyMat);
+  cabin.position.set(-0.1, 1.25, 0);
+  cabin.castShadow = true;
+  carGroup.add(cabin);
+
+  // Glass
+  const glassMat = new THREE.MeshStandardMaterial({
+    color: 0x1a1a1a, roughness: 0.05, metalness: 0.9,
+    transparent: true, opacity: 0.85,
+  });
+  const windshield = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.65, 1.7), glassMat);
+  windshield.position.set(1.1, 1.25, 0);
+  windshield.rotation.z = -0.5;
+  carGroup.add(windshield);
+
+  const rearWindow = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.65, 1.7), glassMat);
+  rearWindow.position.set(-1.3, 1.25, 0);
+  rearWindow.rotation.z = 0.55;
+  carGroup.add(rearWindow);
+
+  const sideWin1 = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.55, 0.05), glassMat);
+  sideWin1.position.set(-0.1, 1.3, 0.88);
+  carGroup.add(sideWin1);
+  const sideWin2 = sideWin1.clone();
+  sideWin2.position.z = -0.88;
+  carGroup.add(sideWin2);
+
+  // Wheels
+  const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.7 });
+  const rimMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.3, metalness: 0.9 });
+
+  function makeWheel(x, z) {
+    const g = new THREE.Group();
+    const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.3, 24), wheelMat);
+    tire.rotation.z = Math.PI / 2;
+    g.add(tire);
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.32, 16), rimMat);
+    rim.rotation.z = Math.PI / 2;
+    g.add(rim);
+    g.position.set(x, 0.42, z);
+    g.castShadow = true;
+    return g;
+  }
+  carGroup.add(makeWheel(1.4, 0.95));
+  carGroup.add(makeWheel(1.4, -0.95));
+  carGroup.add(makeWheel(-1.4, 0.95));
+  carGroup.add(makeWheel(-1.4, -0.95));
+
+  // Lights
+  const headlightMat = new THREE.MeshStandardMaterial({
+    color: 0xffffaa, emissive: 0xffffaa, emissiveIntensity: 0.5, roughness: 0.2,
+  });
+  const hl1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.4), headlightMat);
+  hl1.position.set(2.21, 0.7, 0.6);
+  carGroup.add(hl1);
+  const hl2 = hl1.clone();
+  hl2.position.z = -0.6;
+  carGroup.add(hl2);
+
+  const tailMat = new THREE.MeshStandardMaterial({
+    color: 0xff3333, emissive: 0xff3333, emissiveIntensity: 0.3, roughness: 0.3,
+  });
+  const tl1 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.18, 0.5), tailMat);
+  tl1.position.set(-2.21, 0.75, 0.6);
+  carGroup.add(tl1);
+  const tl2 = tl1.clone();
+  tl2.position.z = -0.6;
+  carGroup.add(tl2);
+
+  carGroup.position.set(0, 0, 0);
+  scene.add(carGroup);
+}
+
+function buildPillar() {
+  const g = new THREE.Group();
+  const pillar = new THREE.Mesh(
+    new THREE.BoxGeometry(0.6, 8, 0.6),
+    new THREE.MeshStandardMaterial({ color: 0xFFD000, roughness: 0.6 })
+  );
+  pillar.position.y = 4;
+  pillar.castShadow = true;
+  g.add(pillar);
+
+  const sign = new THREE.Mesh(
+    new THREE.BoxGeometry(0.7, 3.5, 0.05),
+    new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.7 })
+  );
+  sign.position.set(0, 4, 0.32);
+  g.add(sign);
+
+  const accent = new THREE.Mesh(
+    new THREE.BoxGeometry(0.5, 0.05, 0.06),
+    new THREE.MeshBasicMaterial({ color: 0xFFD000 })
+  );
+  accent.position.set(0, 5.3, 0.36);
+  g.add(accent);
+
+  g.position.set(-5.5, 0, 1);
+  scene.add(g);
+}
+
+function buildFoam() {
+  const foamMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff, roughness: 0.3, transparent: true, opacity: 0.85,
+  });
+
+  const positions = [
+    [1.5, 1.0, 0.7], [0.8, 1.6, 0.5], [-0.5, 1.7, -0.3],
+    [-1.0, 1.55, 0.6], [1.8, 1.05, -0.5], [0, 1.75, 0],
+    [1.2, 0.95, -0.7], [-1.5, 1.35, 0.2], [0.5, 1.7, -0.7],
+    [-0.2, 1.7, 0.7], [1.6, 1.0, 0.0], [-1.7, 1.0, -0.5],
+  ];
+
+  positions.forEach(pos => {
+    const cluster = new THREE.Group();
+    for (let i = 0; i < 4; i++) {
+      const r = 0.12 + Math.random() * 0.18;
+      const sphere = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), foamMat);
+      sphere.position.set(
+        (Math.random() - 0.5) * 0.3,
+        (Math.random() - 0.5) * 0.2,
+        (Math.random() - 0.5) * 0.3
+      );
+      cluster.add(sphere);
+    }
+    cluster.position.set(pos[0], pos[1], pos[2]);
+    scene.add(cluster);
+  });
+}
+
+function buildBubbles() {
+  const bubbleMat = new THREE.MeshStandardMaterial({
+    color: 0xFFD000, emissive: 0xFFD000, emissiveIntensity: 0.4,
+    transparent: true, opacity: 0.5, roughness: 0.2,
+  });
+
+  for (let i = 0; i < 25; i++) {
+    const r = 0.05 + Math.random() * 0.1;
+    const bubble = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), bubbleMat);
+    bubble.position.set(
+      (Math.random() - 0.5) * 14,
+      Math.random() * 6 + 1,
+      (Math.random() - 0.5) * 10
+    );
+    bubble.userData = {
+      ySpeed: 0.005 + Math.random() * 0.01,
+      xWobble: Math.random() * Math.PI * 2,
+      wobbleSpeed: 0.5 + Math.random(),
+    };
+    scene.add(bubble);
+    foamParticles.push(bubble);
+  }
+}
+
+function setupLights() {
+  scene.add(new THREE.AmbientLight(0x404040, 0.4));
+
+  const fillLight = new THREE.DirectionalLight(0xffffff, 0.7);
+  fillLight.position.set(5, 10, 5);
+  fillLight.castShadow = true;
+  fillLight.shadow.mapSize.width = 1024;
+  fillLight.shadow.mapSize.height = 1024;
+  fillLight.shadow.camera.near = 0.5;
+  fillLight.shadow.camera.far = 30;
+  fillLight.shadow.camera.left = -10;
+  fillLight.shadow.camera.right = 10;
+  fillLight.shadow.camera.top = 10;
+  fillLight.shadow.camera.bottom = -10;
+  scene.add(fillLight);
+
+  const rim1 = new THREE.PointLight(0xFFD000, 1.5, 20);
+  rim1.position.set(-5, 3, 4);
+  scene.add(rim1);
+
+  const rim2 = new THREE.PointLight(0xFFD000, 1.0, 18);
+  rim2.position.set(6, 2, 3);
+  scene.add(rim2);
+
+  const back = new THREE.PointLight(0x88aaff, 0.6, 15);
+  back.position.set(0, 4, -5);
+  scene.add(back);
+}
+
+function bindEvents() {
+  container.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    autoRotate = false;
+    prevMouseX = e.clientX;
+    prevMouseY = e.clientY;
+  });
+
+  window.addEventListener('mouseup', () => isDragging = false);
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    targetRotY += (e.clientX - prevMouseX) * 0.008;
+    targetRotX = Math.max(-1.3, Math.min(0.3, targetRotX - (e.clientY - prevMouseY) * 0.005));
+    prevMouseX = e.clientX;
+    prevMouseY = e.clientY;
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  });
+
+  container.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      isDragging = true;
+      autoRotate = false;
+      prevMouseX = e.touches[0].clientX;
+      prevMouseY = e.touches[0].clientY;
+    }
+  }, { passive: true });
+
+  container.addEventListener('touchmove', (e) => {
+    if (!isDragging || e.touches.length !== 1) return;
+    targetRotY += (e.touches[0].clientX - prevMouseX) * 0.008;
+    targetRotX = Math.max(-1.3, Math.min(0.3, targetRotX - (e.touches[0].clientY - prevMouseY) * 0.005));
+    prevMouseX = e.touches[0].clientX;
+    prevMouseY = e.touches[0].clientY;
+  }, { passive: true });
+
+  container.addEventListener('touchend', () => isDragging = false);
+
+  container.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    targetZoom = Math.max(8, Math.min(35, targetZoom + e.deltaY * 0.015));
+    autoRotate = false;
+  }, { passive: false });
+
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const v = views[parseInt(btn.dataset.view)];
+      targetRotY = v.rotY;
+      targetRotX = v.rotX;
+      targetZoom = v.zoom;
+      autoRotate = false;
+    });
+  });
+
+  window.addEventListener('resize', () => {
+    if (!container.clientWidth) return;
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+  });
+
+  let inactivityTimer;
+  ['mousemove', 'touchstart', 'wheel'].forEach(evt => {
+    container.addEventListener(evt, () => {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => { autoRotate = true; }, 8000);
+    });
+  });
+}
+
+function updateCamera() {
+  const target = new THREE.Vector3(0, 1.5, 0);
+  camera.position.x = target.x + zoom * Math.sin(rotationY) * Math.cos(rotationX);
+  camera.position.y = target.y + zoom * Math.sin(-rotationX) + 2;
+  camera.position.z = target.z + zoom * Math.cos(rotationY) * Math.cos(rotationX);
+  camera.lookAt(target);
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  if (autoRotate) targetRotY += 0.0015;
+
+  rotationY += (targetRotY - rotationY) * 0.08;
+  rotationX += (targetRotX - rotationX) * 0.08;
+  zoom += (targetZoom - zoom) * 0.08;
+  updateCamera();
+
+  foamParticles.forEach(p => {
+    if (p.userData && p.userData.ySpeed) {
+      p.position.y += p.userData.ySpeed;
+      p.position.x += Math.sin(Date.now() * 0.001 * p.userData.wobbleSpeed + p.userData.xWobble) * 0.003;
+      if (p.position.y > 8) {
+        p.position.y = 0.5;
+        p.position.x = (Math.random() - 0.5) * 14;
+        p.position.z = (Math.random() - 0.5) * 10;
+      }
+    }
+  });
+
+  renderer.render(scene, camera);
+}
+
+const langBtn = document.getElementById('langBtn');
+let isAr = false;
+langBtn.addEventListener('click', () => {
+  isAr = !isAr;
+  document.body.classList.toggle('ar', isAr);
+  document.documentElement.lang = isAr ? 'ar' : 'en';
+  document.documentElement.dir = isAr ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-en]').forEach(el => {
+    el.textContent = isAr ? el.dataset.ar : el.dataset.en;
+  });
+  langBtn.textContent = isAr ? 'EN / عربي' : 'عربي / EN';
+});
+
+const nav = document.querySelector('.nav');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 30) {
+    nav.style.padding = '12px 32px';
+    nav.style.background = 'rgba(10,10,10,.92)';
+  } else {
+    nav.style.padding = '18px 32px';
+    nav.style.background = 'rgba(10,10,10,.7)';
+  }
+});
+
+window.addEventListener('load', () => {
+  if (typeof THREE !== 'undefined') {
+    init();
+  } else {
+    document.getElementById('loaderText').textContent = '3D library failed';
+  }
+});
+</script>
+
+</body>
+</html>
